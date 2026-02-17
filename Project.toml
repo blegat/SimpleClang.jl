@@ -15,6 +15,6 @@ MultilineStrings = "1e8d2bf6-9821-4900-9a2f-4d87552df2bd"
 [compat]
 Clang = "0.18 - 0.19"
 InteractiveUtils = "1.10"
-LLD_jll = "18.1.7"
+LLD_jll = "15 - 18"
 Markdown = "1.10"
 MultilineStrings = "1"
