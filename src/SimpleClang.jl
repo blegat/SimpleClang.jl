@@ -85,6 +85,8 @@ function compile(
         push!(args, "-S")
         push!(args, "-emit-llvm")
     end
+    include_dir = normpath(Clang_jll.artifact_dir, "include")
+    push!(args, "-I$include_dir")
     if "-fopenmp" in cflags && !use_system
         dir = LLVMOpenMP_jll.artifact_dir
         push!(args, "-I$(dir)/include")
