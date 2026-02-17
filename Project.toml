@@ -12,7 +12,7 @@ MultilineStrings = "1e8d2bf6-9821-4900-9a2f-4d87552df2bd"
 
 [compat]
 Clang_jll = "18.1.7"
-InteractiveUtils = "1.11.0"
+InteractiveUtils = "1.10"
 LLVMOpenMP_jll = "18.1.8"
-Markdown = "1.11.0"
-MultilineStrings = "1.0.0"
+Markdown = "1.10"
+MultilineStrings = "1"
