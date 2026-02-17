@@ -130,10 +130,10 @@ function compile(
                 # On Windows, -fuse-ld=lld requires lld-link on PATH; Clang_jll doesn't ship LLD (see Yggdrasil L/LLVM/common.jl clangscript).
                 if Sys.iswindows()
                     lld_tools = joinpath(LLD_jll.artifact_dir, "tools")
-                    path_sep = ";"
-                    env = copy(ENV)
-                    env["PATH"] = lld_tools * path_sep * get(ENV, "PATH", "")
-                    run(setenv(cmd, env))
+                    new_path = lld_tools * ";" * get(ENV, "PATH", "")
+                    withenv("PATH" => new_path) do
+                        run(cmd)
+                    end
                 else
                     run(cmd)
                 end
