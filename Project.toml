@@ -2,3 +2,15 @@ name = "SimpleClang"
 uuid = "d80a2e99-53a4-4f81-9fa2-fda2140d535e"
 version = "0.1.0"
 authors = ["Benoît Legat <benoit.legat@gmail.com>"]
+
+[deps]
+Clang_jll = "0ee61d77-7f21-5576-8119-9fcc46b10100"
+InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+LLVMOpenMP_jll = "1d63c593-3942-5779-bab2-d838dc0a180e"
+MultilineStrings = "1e8d2bf6-9821-4900-9a2f-4d87552df2bd"
+
+[compat]
+Clang_jll = "18.1.7"
+InteractiveUtils = "1.11.0"
+LLVMOpenMP_jll = "18.1.8"
+MultilineStrings = "1.0.0"
