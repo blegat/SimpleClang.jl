@@ -3,6 +3,7 @@ using Suppressor
 using SimpleClang
 
 function test_output(code, expected)
+    compile_and_run(code, verbose = 1)
     output = @capture_out compile_and_run(code)
     @test output == expected
 end
