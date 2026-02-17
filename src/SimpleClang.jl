@@ -3,6 +3,7 @@ module SimpleClang
 import Clang_jll
 import LLD_jll
 import LLVMOpenMP_jll
+import libLLVM_jll
 import Clang
 import Markdown
 import MultilineStrings
@@ -128,9 +129,15 @@ function compile(
                     @info("Compiling : $cmd")
                 end
                 # On Windows, -fuse-ld=lld requires lld-link on PATH; Clang_jll doesn't ship LLD (see Yggdrasil L/LLVM/common.jl clangscript).
+                # Also need Clang_jll and libLLVM_jll on PATH so clang.exe finds its DLLs (STATUS_DLL_NOT_FOUND otherwise).
                 if Sys.iswindows()
-                    lld_tools = joinpath(LLD_jll.artifact_dir, "tools")
-                    new_path = lld_tools * ";" * get(ENV, "PATH", "")
+                    path_parts = String[]
+                    push!(path_parts, joinpath(Clang_jll.artifact_dir, "tools"))
+                    push!(path_parts, joinpath(Clang_jll.artifact_dir, "lib"))
+                    push!(path_parts, joinpath(libLLVM_jll.artifact_dir, "bin"))
+                    push!(path_parts, joinpath(libLLVM_jll.artifact_dir, "lib"))
+                    push!(path_parts, joinpath(LLD_jll.artifact_dir, "tools"))
+                    new_path = join(path_parts, ";") * ";" * get(ENV, "PATH", "")
                     withenv("PATH" => new_path) do
                         run(cmd)
                     end
