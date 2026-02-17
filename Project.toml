@@ -1,0 +1,4 @@
+name = "SimpleClang"
+uuid = "d80a2e99-53a4-4f81-9fa2-fda2140d535e"
+version = "0.1.0"
+authors = ["Benoît Legat <benoit.legat@gmail.com>"]
