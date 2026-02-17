@@ -166,7 +166,9 @@ end
 function compile_and_run(code::Code; verbose = 0, args = String[], valgrind::Bool = false, mpi::Bool = false, num_processes = nothing, show_run_command = !isempty(args) || verbose >= 1, kws...)
     bin_file = compile(code; lib = false, mpi, verbose, kws...)
     if !isnothing(bin_file)
-        cmd_vec = [bin_file; args]
+        # On Windows the linker produces bin.exe when given -o bin
+        run_path = Sys.iswindows() && !endswith(bin_file, ".exe") ? bin_file * ".exe" : bin_file
+        cmd_vec = [run_path; args]
         if valgrind
             cmd_vec = ["valgrind"; cmd_vec]
         end
