@@ -79,6 +79,10 @@ function compile(
         push!(args, "c++")
     end
     append!(args, cflags)
+    # On Windows, clang defaults to MSVC link.exe and can hang if it's missing; use LLD instead.
+    if !use_system && Sys.iswindows()
+        push!(args, "-fuse-ld=lld")
+    end
     if lib
         push!(args, "-fPIC")
         push!(args, "-shared")
