@@ -1,6 +1,7 @@
 module SimpleClang
 
 import Clang_jll
+import LLVMOpenMP_jll
 import MultilineStrings
 import InteractiveUtils
 
@@ -61,7 +62,7 @@ function compile(
     emit_llvm = false,
     cflags = ["-O3"],
     mpi::Bool = false,
-    use_system::Bool = mpi || "-fopenmp" in cflags, # `-fopenmp` will not work with pure Clang_jll, it needs openmp installed as well
+    use_system::Bool = mpi || "-fopenmp" in cflags, # On Github action, I get `error: unknown type name 'uintptr_t'` with LLVMOpenMP_jll but it works locally
     verbose = 0,
 )
     path = mktempdir()
@@ -82,6 +83,11 @@ function compile(
     if emit_llvm
         push!(args, "-S")
         push!(args, "-emit-llvm")
+    end
+    if "-fopenmp" in cflags && !use_system
+        dir = LLVMOpenMP_jll.artifact_dir
+        push!(args, "-I$(dir)/include")
+        push!(args, "-L$(dir)/lib")
     end
     push!(args, main_file)
     push!(args, "-o")
@@ -104,6 +110,7 @@ function compile(
         end
     catch err
         if err isa ProcessFailedException
+            @warn(sprint(showerror, err))
             return
         else
             rethrow(err)
@@ -114,6 +121,9 @@ end
 
 function emit_llvm(code; kws...)
     llvm = compile(code; lib = false, emit_llvm = true, kws...)
+    if isnothing(llvm)
+        return
+    end
     InteractiveUtils.print_llvm(stdout, read(llvm, String))
     return code
 end
