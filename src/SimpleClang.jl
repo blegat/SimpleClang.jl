@@ -2,6 +2,7 @@ module SimpleClang
 
 import Clang_jll
 import LLVMOpenMP_jll
+import Clang
 import Markdown
 import MultilineStrings
 import InteractiveUtils
@@ -70,6 +71,7 @@ function compile(
     main_file = joinpath(path, "main." * source_extension(code))
     bin_file = joinpath(path, ifelse(emit_llvm, "main.llvm", ifelse(lib, "lib.so", "bin")))
     write(main_file, code.code)
+    args = Clang.get_default_args()
     args = String[]
     if !use_system && code isa CppCode
         # `clang++` is not part of `Clang_jll`
