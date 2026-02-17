@@ -1,6 +1,7 @@
 module SimpleClang
 
 import Clang_jll
+import LLD_jll
 import LLVMOpenMP_jll
 import Clang
 import Markdown
@@ -126,7 +127,15 @@ function compile(
                 if verbose >= 1
                     @info("Compiling : $cmd")
                 end
-                run(cmd)
+                # On Windows, -fuse-ld=lld requires lld-link on PATH; Clang_jll doesn't ship LLD (see Yggdrasil L/LLVM/common.jl clangscript).
+                if Sys.iswindows()
+                    lld_tools = joinpath(LLD_jll.artifact_dir, "tools")
+                    path_sep = ";"
+                    env = merge(ENV, "PATH" => lld_tools * path_sep * get(ENV, "PATH", ""))
+                    run(setenv(cmd, env))
+                else
+                    run(cmd)
+                end
             end
         end
     catch err

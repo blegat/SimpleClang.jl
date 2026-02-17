@@ -7,12 +7,14 @@ authors = ["Benoît Legat <benoit.legat@gmail.com>"]
 Clang = "40e3b903-d033-50b4-a0cc-940c62c95e31"
 Clang_jll = "0ee61d77-7f21-5576-8119-9fcc46b10100"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+LLD_jll = "d55e3150-da41-5e91-b323-ecfd1eec6109"
 LLVMOpenMP_jll = "1d63c593-3942-5779-bab2-d838dc0a180e"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 MultilineStrings = "1e8d2bf6-9821-4900-9a2f-4d87552df2bd"
 
 [compat]
-Clang = "0.19.1"
+Clang = "0.18-0.19"
 InteractiveUtils = "1.10"
+LLD_jll = "18.1.7"
 Markdown = "1.10"
 MultilineStrings = "1"
