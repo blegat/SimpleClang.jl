@@ -85,6 +85,20 @@ function compile(
         push!(args, "-S")
         push!(args, "-emit-llvm")
     end
+    include_dir = normpath(Clang_jll.artifact_dir, "include")
+    push!(args, "-I$include_dir")
+    # Clang_jll's clang doesn't know the macOS SDK path; add -isysroot so system headers (e.g. stdio.h) are found.
+    if !use_system && Sys.isapple()
+        sdk_path = try
+            readchomp(pipeline(`xcrun --show-sdk-path`, stderr=devnull))
+        catch
+            ""
+        end
+        if !isempty(sdk_path) && isdir(sdk_path)
+            push!(args, "-isysroot")
+            push!(args, sdk_path)
+        end
+    end
     if "-fopenmp" in cflags && !use_system
         dir = LLVMOpenMP_jll.artifact_dir
         push!(args, "-I$(dir)/include")
