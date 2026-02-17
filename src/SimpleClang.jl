@@ -131,7 +131,8 @@ function compile(
                 if Sys.iswindows()
                     lld_tools = joinpath(LLD_jll.artifact_dir, "tools")
                     path_sep = ";"
-                    env = merge(ENV, "PATH" => lld_tools * path_sep * get(ENV, "PATH", ""))
+                    env = copy(ENV)
+                    env["PATH"] = lld_tools * path_sep * get(ENV, "PATH", "")
                     run(setenv(cmd, env))
                 else
                     run(cmd)
