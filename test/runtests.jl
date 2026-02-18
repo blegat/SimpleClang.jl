@@ -54,12 +54,12 @@ end
     end
 end
 
-@testset "compile_lib" begin
-    code, lib = compile_lib(c"""
+const LIB = compile_lib(c"""
 int increment(int i) {
   return i + 1;
 }
-""")
-    @test code isa CCode
-    @test ccall((:increment, lib), Int, (Int,), 1) == 2
+""")[2]
+
+@testset "compile_lib" begin
+    @test ccall((:increment, LIB), Int, (Int,), 1) == 2
 end
