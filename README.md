@@ -12,6 +12,9 @@ Pkg.add("SimpleClang")
 ```
 In a Pluto notebook, `using SimpleClang` is sufficient, [it will automatically get installed](https://plutojl.org/en/docs/packages/).
 
+> [!WARNING]
+> It does not work yet on Windows. If you are running on Windows, use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install).
+
 ## Usage
 
 The main usage is to call `compile_and_run` from a simple C code.
