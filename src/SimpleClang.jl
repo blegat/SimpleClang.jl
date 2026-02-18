@@ -203,32 +203,6 @@ function codesnippet(code::Code)
     return typeof(code)(join(lines[i+1:j-1], '\n'))
 end
 
-struct Example
-    name::String
-end
-
-function code(example::Example)
-    code = read(joinpath(dirname(dirname(dirname(@__DIR__))), "examples", example.name), String)
-    ext = split(example.name, '.')[end]
-    if ext == "c"
-        return CCode(code)
-    elseif ext == "cpp" || ext == "cc"
-        return CppCode(code)
-    elseif ext == "cl"
-        return CLCode(code)
-    else
-        error("Unrecognized extension `$ext`.")
-    end
-end
-
-function compile_and_run(example::Example; kws...)
-    return compile_and_run(code(example); kws...)
-end
-
-function compile_lib(example::Example; kws...)
-    return compile_lib(code(example); kws...)
-end
-
 # Taken from `JuMP/src/JuMP.jl`
 const _EXCLUDE_SYMBOLS = [Symbol(@__MODULE__), :eval, :include]
 
