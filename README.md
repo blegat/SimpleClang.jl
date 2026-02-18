@@ -78,3 +78,26 @@ julia> md_code(compile_and_run(code))
       int i = 0;
       printf("%d\n", i);
 ```
+
+You can also avoid writing the boilerplate code altogether with `wrap_compile_and_run`:
+```julia
+wrap_compile_and_run(c"""
+       printf("Hello world\n");
+       """)
+Hello world
+CCode("printf(\"Hello world\\n\");\n")
+```
+This wraps the code in a `main` function, automatically detects that `stdio.h` is needed and add it,
+run this extended code but only return your snippet to hide the added boilerplate part.
+You can see what was added with `wrap_in_main`:
+```julia
+julia> wrap_in_main(c"""
+       printf("Hello world\n");
+       """)
+CCode("#include <stdio.h>\nint main(int argc, char **argv) {\n  printf(\"Hello world\\n\");\n}\n")
+
+julia> wrap_in_main(c"""
+       int *p = (int*) malloc(4 * sizeof(int));
+       """)
+CCode("#include <stdlib.h>\nint main(int argc, char **argv) {\n  int *p = (int*) malloc(4 * sizeof(int));\n}\n")
+```
