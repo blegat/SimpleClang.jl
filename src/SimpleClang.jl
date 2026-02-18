@@ -124,8 +124,19 @@ function compile(
             run(cmd)
         else
             exe = Clang_jll.clang()
-            # JLL may return a Cmd (with setenv) or a path string depending on version
-            cmd = exe isa Cmd ? Cmd(exe, args...) : Cmd([string(exe); args])
+            # JLL may return a Cmd (with setenv) or a path string depending on version.
+            # Cmd(::Cmd, args...) does not append args; it matches a different constructor.
+            # Build new exec vector and preserve env/dir from the JLL Cmd.
+            if exe isa Cmd
+                cmd = Cmd([exe.exec; args])
+                if exe.env !== nothing
+                    cmd = setenv(cmd, exe.env; dir = exe.dir)
+                elseif !isempty(exe.dir)
+                    cmd = Cmd(cmd; dir = exe.dir)
+                end
+            else
+                cmd = Cmd([string(exe); args])
+            end
             if verbose >= 1
                 @info("Compiling : $cmd")
             end
