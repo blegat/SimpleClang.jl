@@ -101,3 +101,16 @@ julia> wrap_in_main(c"""
        """)
 CCode("#include <stdlib.h>\nint main(int argc, char **argv) {\n  int *p = (int*) malloc(4 * sizeof(int));\n}\n")
 ```
+
+You can also compile C function in library and easily call them from Julia.
+```julia
+julia> code, lib = compile_lib(c"""
+       int increment(int i) {
+         return i + 1;
+       }
+       """)
+(CCode("int increment(int i) {\n  return i + 1;\n}\n"), "/tmp/jl_cfdpYw/lib.so")
+
+julia> ccall((:increment, LIB), Int, (Int,), 1)
+2
+```
