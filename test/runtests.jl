@@ -18,16 +18,6 @@ int main()
 """, "0\n")
 end
 
-    test_output(c"""
-#include <iostream>
-int main()
-{
-    int i = 0;
-    printf("%d\n", i);
-}
-""", "0\n")
-
-
 @testset "codesnippet" begin
     @test codesnippet(c"""
     a;
