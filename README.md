@@ -54,3 +54,27 @@ int main&#40;&#41;
 &#125;</code></pre>
 </div>
 ```
+
+When showing the code in a Pluto notebook, you might want to remove boilerplate
+code and only focus on the important part.
+This is possible with `codesnippet` that remove code before (and including) the first and after (and including) the last line containing `codesnippet`.
+```julia
+julia> code = c"""
+       #include <stdio.h>
+       int main()
+       { // codesnippet
+           int i = 0;
+           printf("%d\n", i);
+       } // codesnippet
+       """
+CCode("#include <stdio.h>\nint main()\n{ // codesnippet\n    int i = 0;\n    printf(\"%d\\n\", i);\n} // codesnippet\n")
+
+julia> md_code(codesnippet(code))
+      int i = 0;
+      printf("%d\n", i);
+
+julia> md_code(compile_and_run(code))
+0
+      int i = 0;
+      printf("%d\n", i);
+```
