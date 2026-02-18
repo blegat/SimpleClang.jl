@@ -24,17 +24,8 @@ macro cpp_str(s)
     return :($CppCode($(esc(s))))
 end
 
-struct CLCode <: Code
-    code::String
-end
-
-macro cl_str(s)
-    return :($CLCode($(esc(s))))
-end
-
 source_extension(::CCode) = "c"
 source_extension(::CppCode) = "cpp"
-source_extension(::CLCode) = "cl"
 
 compiler(::CCode, mpi::Bool) = mpi ? "mpicc" : "clang"
 function compiler(::CppCode, mpi::Bool)
