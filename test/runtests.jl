@@ -79,3 +79,13 @@ end
         @test output == "Hello, World!\n"
     end
 end
+
+const LIB = compile_lib(c"""
+int increment(int i) {
+  return i + 1;
+}
+""")[2]
+
+@testset "compile_lib" begin
+    @test ccall((:increment, LIB), Int, (Int,), 1) == 2
+end
