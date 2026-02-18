@@ -4,6 +4,7 @@ using SimpleClang
 
 function test_output(code, expected)
     output = @capture_out compile_and_run(code)
+    output = replace(output, "\r\n" => "\n")  # Windows CRLF
     @test output == expected
 end
 
