@@ -18,6 +18,16 @@ int main()
 """, "0\n")
 end
 
+    test_output(c"""
+#include <iostream>
+int main()
+{
+    int i = 0;
+    printf("%d\n", i);
+}
+""", "0\n")
+
+
 @testset "codesnippet" begin
     @test codesnippet(c"""
     a;
@@ -39,12 +49,17 @@ end
 end
 
 @testset "wrap" begin
-    code = c"""
+    for code in [
+        c"""
     printf("Hello, World!\n");
-    """
-    md_code(wrap_in_main(code))
-    out = wrap_compile_and_run(code, libs = ["stdio.h"])
-    @test out == code
-    output = @capture_out wrap_compile_and_run(code, libs = ["stdio.h"])
-    @test output == "Hello, World!\n"
+    """,
+        cpp"""
+    printf("Hello, World!\n");
+    """,
+    ]
+        out = wrap_compile_and_run(code)
+        @test out == code
+        output = @capture_out wrap_compile_and_run(code)
+        @test output == "Hello, World!\n"
+    end
 end

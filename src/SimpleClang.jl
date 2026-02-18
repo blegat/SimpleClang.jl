@@ -156,6 +156,22 @@ function compile_lib(code::Code; kws...)
     return codesnippet(code), compile(code; lib = true, kws...)
 end
 
+_c_lib(name, ::CCode) = name * ".h"
+_c_lib(name, ::CppCode) = "c" * name
+
+function default_libs(code::Union{CCode, CppCode})
+    libs = String[]
+    stdio_tokens = ["printf", "scanf"]
+    if any(token -> contains(code.code, token), stdio_tokens)
+        push!(libs, _c_lib("stdio", code))
+    end
+    stdlib_tokens = ["NULL", "malloc", "calloc", "free", "EXIT_FAILURE", "EXIT_SUCCESS"]
+    if any(token -> contains(code.code, token), stdlib_tokens)
+        push!(libs, _c_lib("stdlib", code))
+    end
+    return libs
+end
+
 function compile_and_run(code::Code; verbose = 0, args = String[], valgrind::Bool = false, mpi::Bool = false, num_processes = nothing, show_run_command = !isempty(args) || verbose >= 1, kws...)
     bin_file = compile(code; lib = false, mpi, verbose, kws...)
     if !isnothing(bin_file)
@@ -182,7 +198,7 @@ function compile_and_run(code::Code; verbose = 0, args = String[], valgrind::Boo
     return codesnippet(code)
 end
 
-function wrap_in_main(content; libs = String[])
+function wrap_in_main(content; libs = default_libs(content))
     code = content.code
     if code[end] == '\n'
         code = code[1:end-1]
@@ -198,7 +214,7 @@ $(MultilineStrings.indent(code, 2))
     return typeof(content)(code)
 end
 
-function wrap_compile_and_run(code; libs = String[], kws...)
+function wrap_compile_and_run(code; libs = default_libs(code), kws...)
     compile_and_run(wrap_in_main(code; libs); kws...)
     return code
 end
