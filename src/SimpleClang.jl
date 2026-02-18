@@ -1,7 +1,10 @@
 module SimpleClang
 
 import Clang_jll
+import LLD_jll
 import LLVMOpenMP_jll
+import libLLVM_jll
+import Clang
 import Markdown
 import MultilineStrings
 import InteractiveUtils
@@ -70,6 +73,7 @@ function compile(
     main_file = joinpath(path, "main." * source_extension(code))
     bin_file = joinpath(path, ifelse(emit_llvm, "main.llvm", ifelse(lib, "lib.so", "bin")))
     write(main_file, code.code)
+    args = Clang.get_default_args()
     args = String[]
     if !use_system && code isa CppCode
         # `clang++` is not part of `Clang_jll`
@@ -77,6 +81,10 @@ function compile(
         push!(args, "c++")
     end
     append!(args, cflags)
+    # On Windows, clang defaults to MSVC link.exe and can hang if it's missing; use LLD instead.
+    if !use_system && Sys.iswindows()
+        push!(args, "-fuse-ld=lld")
+    end
     if lib
         push!(args, "-fPIC")
         push!(args, "-shared")
@@ -115,11 +123,39 @@ function compile(
             end
             run(cmd)
         else
-            Clang_jll.clang() do exe
-                cmd = Cmd([exe; args])
-                if verbose >= 1
-                    @info("Compiling : $cmd")
+            exe = Clang_jll.clang()
+            # JLL may return a Cmd (with setenv) or a path string depending on version.
+            # Cmd(::Cmd, args...) does not append args; it matches a different constructor.
+            # Build new exec vector and preserve env/dir from the JLL Cmd.
+            if exe isa Cmd
+                cmd = Cmd([exe.exec; args])
+                if exe.env !== nothing
+                    cmd = setenv(cmd, exe.env; dir = exe.dir)
+                elseif !isempty(exe.dir)
+                    cmd = Cmd(cmd; dir = exe.dir)
                 end
+            else
+                cmd = Cmd([string(exe); args])
+            end
+            if verbose >= 1
+                @info("Compiling : $cmd")
+            end
+            # On Windows: (1) -fuse-ld=lld needs lld-link on PATH; (2) clang.exe needs DLLs from Clang_jll and libLLVM_jll (avoid STATUS_DLL_NOT_FOUND).
+            if Sys.iswindows()
+                path_parts = String[]
+                for base in (Clang_jll.artifact_dir, libLLVM_jll.artifact_dir, LLD_jll.artifact_dir)
+                    push!(path_parts, base)
+                    for sub in ("tools", "lib", "bin")
+                        dir = joinpath(base, sub)
+                        isdir(dir) && push!(path_parts, dir)
+                    end
+                end
+                unique!(path_parts)
+                new_path = join(path_parts, ";") * ";" * get(ENV, "PATH", "")
+                withenv("PATH" => new_path) do
+                    run(cmd)
+                end
+            else
                 run(cmd)
             end
         end
@@ -150,7 +186,9 @@ end
 function compile_and_run(code::Code; verbose = 0, args = String[], valgrind::Bool = false, mpi::Bool = false, num_processes = nothing, show_run_command = !isempty(args) || verbose >= 1, kws...)
     bin_file = compile(code; lib = false, mpi, verbose, kws...)
     if !isnothing(bin_file)
-        cmd_vec = [bin_file; args]
+        # On Windows the linker produces bin.exe when given -o bin
+        run_path = Sys.iswindows() && !endswith(bin_file, ".exe") ? bin_file * ".exe" : bin_file
+        cmd_vec = [run_path; args]
         if valgrind
             cmd_vec = ["valgrind"; cmd_vec]
         end
