@@ -115,13 +115,22 @@ function compile(
             end
             run(cmd)
         else
-            Clang_jll.clang() do exe
-                cmd = Cmd([exe; args])
-                if verbose >= 1
-                    @info("Compiling : $cmd")
+            exe = Clang_jll.clang()
+            # Clang_jll.clang() returns a Cmd in older Julia/JLLWrappers (do-block API) or a path string in newer (non–do-block API).
+            if exe isa Cmd
+                cmd = Cmd([exe.exec; args])
+                if exe.env !== nothing
+                    cmd = setenv(cmd, exe.env; dir = exe.dir)
+                elseif !isempty(exe.dir)
+                    cmd = Cmd(cmd; dir = exe.dir)
                 end
-                run(cmd)
+            else
+                cmd = Cmd([string(exe); args])
             end
+            if verbose >= 1
+                @info("Compiling : $cmd")
+            end
+            run(cmd)
         end
     catch err
         if err isa ProcessFailedException
