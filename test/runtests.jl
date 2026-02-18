@@ -28,3 +28,28 @@ end
     """) == c"""
     b;"""
 end
+
+@testset "emit_llvm" begin
+    @test isnothing(emit_llvm(c"""
+    int i
+    """))
+    @test emit_llvm(c"""
+    int i;
+    """) isa CCode
+end
+
+@testset "wrap" begin
+    for code in [
+        c"""
+    printf("Hello, World!\n");
+    """,
+        cpp"""
+    printf("Hello, World!\n");
+    """,
+    ]
+        out = wrap_compile_and_run(code)
+        @test out == code
+        output = @capture_out wrap_compile_and_run(code)
+        @test output == "Hello, World!\n"
+    end
+end
