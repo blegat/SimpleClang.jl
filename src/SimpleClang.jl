@@ -182,22 +182,24 @@ function compile_and_run(code::Code; verbose = 0, args = String[], valgrind::Boo
     return codesnippet(code)
 end
 
-function wrap_in_main(content)
+function wrap_in_main(content; libs = String[])
     code = content.code
     if code[end] == '\n'
         code = code[1:end-1]
     end
-    return typeof(content)("""
-#include <stdlib.h>
-
+    code = """
 int main(int argc, char **argv) {
 $(MultilineStrings.indent(code, 2))
 }
-""")
+"""
+    for lib in libs
+        code = "#include <$lib>\n" * code
+    end
+    return typeof(content)(code)
 end
 
-function wrap_compile_and_run(code; kws...)
-    compile_and_run(wrap_in_main(code); kws...)
+function wrap_compile_and_run(code; libs = String[], kws...)
+    compile_and_run(wrap_in_main(code; libs); kws...)
     return code
 end
 
