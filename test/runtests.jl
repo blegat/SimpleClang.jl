@@ -17,3 +17,14 @@ int main()
 }
 """, "0\n")
 end
+
+@testset "codesnippet" begin
+    @test codesnippet(c"""
+    a;
+    // codesnippet
+    b;
+    // codesnippet
+    c;
+    """) == c"""
+    b;"""
+end
