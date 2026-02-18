@@ -53,3 +53,13 @@ end
         @test output == "Hello, World!\n"
     end
 end
+
+@testset "compile_lib" begin
+    code, lib = compile_lib(c"""
+int increment(int i) {
+  return i + 1;
+}
+""")
+    @test code isa CCode
+    @test ccall((:increment, lib), Int, (Int,), 1) == 2
+end
