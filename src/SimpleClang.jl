@@ -124,7 +124,8 @@ function compile(
             run(cmd)
         else
             exe = Clang_jll.clang()
-            cmd = Cmd([string(exe); args])
+            # JLL may return a Cmd (with setenv) or a path string depending on version
+            cmd = exe isa Cmd ? Cmd(exe, args...) : Cmd([string(exe); args])
             if verbose >= 1
                 @info("Compiling : $cmd")
             end
