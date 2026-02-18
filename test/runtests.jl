@@ -1,4 +1,5 @@
 using Test
+using Markdown
 using Suppressor
 using SimpleClang
 
@@ -18,6 +19,13 @@ int main()
 """, "0\n")
 end
 
+@testset "show_run_command" begin
+    output = @capture_err wrap_compile_and_run(c"""
+    return EXIT_SUCCESS;
+    """, show_run_command = true)
+    @test startswith(output, "[ Info: Running : `")
+end
+
 @testset "codesnippet" begin
     @test codesnippet(c"""
     a;
@@ -27,6 +35,22 @@ end
     c;
     """) == c"""
     b;"""
+end
+
+@testset "md" begin
+    code = c"""
+int i = 0;
+printf("%d\n", i);
+    """
+    md_code(code) == md"""
+```c
+int i = 0;
+printf("%d\n", i);
+```"""
+end
+
+@testset "html" begin
+    @test sprint(show, MIME"text/html"(), c"int i;") == "<div class=\"markdown\"><pre><code class=\"language-c\">int i;</code></pre>\n</div>"
 end
 
 @testset "emit_llvm" begin
