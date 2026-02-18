@@ -23,7 +23,9 @@ end
     output = @capture_err wrap_compile_and_run(c"""
     return EXIT_SUCCESS;
     """, show_run_command = true)
-    @test startswith(output, "[ Info: Running : `")
+    # On MacOS, it starts with "-macosx_version_min has been renamed to -macos_version_min\n[ Info:"
+    # so we cannot use use `startswith`
+    @test contains(output, "[ Info: Running : `")
 end
 
 @testset "codesnippet" begin
