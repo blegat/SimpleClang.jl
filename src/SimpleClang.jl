@@ -54,7 +54,7 @@ function compile(
     emit_llvm = false,
     cflags = ["-O3"],
     mpi::Bool = false,
-    use_system::Bool = mpi || "-fopenmp" in cflags, # On Github action, I get `error: unknown type name 'uintptr_t'` with LLVMOpenMP_jll but it works locally
+    use_system::Bool = mpi,
     verbose = 0,
 )
     path = mktempdir()
