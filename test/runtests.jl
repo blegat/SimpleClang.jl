@@ -89,3 +89,18 @@ int increment(int i) {
 @testset "compile_lib" begin
     @test ccall((:increment, LIB), Int, (Int,), 1) == 2
 end
+
+@testset "OpenMP" begin
+    file = compile(c"""
+float sum(float *vec, int length) {
+    float total = 0;
+	#pragma omp simd
+    for (int i = 0; i < length; i++) {
+        total += vec[i];
+    }
+    return total;
+}
+    """, cflags = ["-fopenmp", "-O3"], lib = true, emit_llvm = true)
+    llvm = read(file, String)
+    @test contains(llvm, "<4 x float>")
+end
