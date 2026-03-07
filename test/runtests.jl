@@ -106,18 +106,19 @@ float sum(float *vec, int length) {
 end
 
 # Taken from https://blegat.github.io/LINMA2710/
-const SUM_LIB = compile(cpp"""
-#include <vector>
+# Uses C (not C++) to avoid Clang_jll's clang 15 being incompatible
+# with newer macOS Xcode SDK libc++ headers.
+const SUM_LIB = compile(c"""
 #include <stdint.h>
+#include <stdlib.h>
 #include <omp.h>
 #include <stdio.h>
 
-extern "C" {
 float sum(float *vec, int length, int num_threads, int verbose) {
   float total = 0;
   omp_set_dynamic(0); // Force the value `num_threads`
   omp_set_num_threads(num_threads);
-  std::vector<float> local_results(num_threads);
+  float *local_results = (float *)calloc(num_threads, sizeof(float));
   #pragma omp parallel
   {
     int thread_num = omp_get_thread_num();
@@ -133,11 +134,12 @@ float sum(float *vec, int length, int num_threads, int verbose) {
       no_false_sharing += vec[i];
 	local_results[thread_num] = no_false_sharing;
   }
-  for (int i = 0; i < local_results.size(); i++)
+  for (int i = 0; i < num_threads; i++)
     total += local_results[i];
+  free(local_results);
   return total;
 }
-}""", lib = true, cflags = ["-O3", "-mavx2", "-fopenmp"])
+""", lib = true, cflags = ["-O3", "-mavx2", "-fopenmp"])
 
 @testset "OpenMP multithread" begin
     c_sum(x::Vector{Cfloat}; num_threads = 1, verbose = 0) = ccall(("sum", SUM_LIB), Cfloat, (Ptr{Cfloat}, Cint, Cint, Cint), x, length(x), num_threads, verbose);
