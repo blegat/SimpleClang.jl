@@ -90,7 +90,7 @@ int increment(int i) {
     @test ccall((:increment, LIB), Int, (Int,), 1) == 2
 end
 
-@testset "OpenMP" begin
+@testset "OpenMP SIMD" begin
     file = compile(c"""
 float sum(float *vec, int length) {
     float total = 0;
@@ -103,4 +103,46 @@ float sum(float *vec, int length) {
     """, cflags = ["-fopenmp", "-O3"], lib = true, emit_llvm = true)
     llvm = read(file, String)
     @test contains(llvm, "<4 x float>")
+end
+
+# Taken from https://blegat.github.io/LINMA2710/
+const SUM_LIB = compile(cpp"""
+#include <vector>
+#include <stdint.h>
+#include <omp.h>
+#include <stdio.h>
+
+extern "C" {
+float sum(float *vec, int length, int num_threads, int verbose) {
+  float total = 0;
+  omp_set_dynamic(0); // Force the value `num_threads`
+  omp_set_num_threads(num_threads);
+  std::vector<float> local_results(num_threads);
+  #pragma omp parallel
+  {
+    int thread_num = omp_get_thread_num();
+	int stride = length / num_threads;
+    int last = stride * (thread_num + 1);
+    if (thread_num + 1 == num_threads)
+      last = length;
+	if (verbose >= 1)
+      fprintf(stderr, "thread id : %d / %d %d:%d\n", thread_num, omp_get_num_threads(), stride * thread_num, last - 1);
+	float no_false_sharing = 0;
+    #pragma omp simd
+    for (int i = stride * thread_num; i < last; i++)
+      no_false_sharing += vec[i];
+	local_results[thread_num] = no_false_sharing;
+  }
+  for (int i = 0; i < local_results.size(); i++)
+    total += local_results[i];
+  return total;
+}
+}""", lib = true, cflags = ["-O3", "-mavx2", "-fopenmp"])
+
+@testset "OpenMP multithread" begin
+    c_sum(x::Vector{Cfloat}; num_threads = 1, verbose = 0) = ccall(("sum", SUM_LIB), Cfloat, (Ptr{Cfloat}, Cint, Cint, Cint), x, length(x), num_threads, verbose);
+    vec = Cfloat[-1, 3, 4, 2, 5, -2, -9, 4]
+    for num_threads in 1:4
+        @test c_sum(vec; num_threads) == sum(vec)
+    end
 end
