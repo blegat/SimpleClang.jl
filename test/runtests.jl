@@ -8,7 +8,7 @@ function test_output(code, expected)
     @test output == expected
 end
 
-@testset "printf" begin
+@testset "printf C" begin
     test_output(c"""
 #include <stdio.h>
 int main()
@@ -18,6 +18,18 @@ int main()
 }
 """, "0\n")
 end
+
+@testset "printf C++" begin
+    test_output(cpp"""
+#include <cstdio>
+int main()
+{
+    int i = 0;
+    printf("%d\n", i);
+}
+""", "0\n")
+end
+
 
 @testset "show_run_command" begin
     output = @capture_err wrap_compile_and_run(c"""
