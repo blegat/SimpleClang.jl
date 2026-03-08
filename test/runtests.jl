@@ -151,7 +151,7 @@ float sum(float *vec, int length, int num_threads, int verbose) {
   free(local_results);
   return total;
 }
-""", lib = true, cflags = ["-O3", "-mavx2", "-fopenmp"])
+""", lib = true, cflags = ["-O3", "-march=native", "-fopenmp"])
 
 @testset "OpenMP multithread" begin
     c_sum(x::Vector{Cfloat}; num_threads = 1, verbose = 0) = ccall(("sum", SUM_LIB), Cfloat, (Ptr{Cfloat}, Cint, Cint, Cint), x, length(x), num_threads, verbose);
