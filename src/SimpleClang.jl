@@ -33,6 +33,24 @@ function compiler(::CppCode, mpi::Bool)
     return "clang++"
 end
 
+# On macOS, Clang_jll's clang 15 cannot parse the system (Xcode 16+) libc++ headers.
+# For C++ with OpenMP we use a system compiler (Homebrew LLVM or GCC) when available.
+function find_cpp_openmp_compiler_macos()
+    candidates = [
+        "/opt/homebrew/opt/llvm/bin/clang++",   # Apple Silicon Homebrew
+        "/usr/local/opt/llvm/bin/clang++",      # Intel Homebrew
+    ]
+    for c in candidates
+        ispath(c) && return c
+    end
+    try
+        gpp = readchomp(pipeline(`which g++ 2>/dev/null`, stderr=devnull))
+        isempty(gpp) || return gpp
+    catch
+    end
+    return ""
+end
+
 inline_code(code::AbstractString, ext::String) = HTML("""<code class="language-$ext">$code</code>""")
 inline_code(code::Code) = inline_code(code.code, source_extension(code))
 
@@ -61,9 +79,13 @@ function compile(
     main_file = joinpath(path, "main." * source_extension(code))
     bin_file = joinpath(path, ifelse(emit_llvm, "main.llvm", ifelse(lib, "lib.so", "bin")))
     write(main_file, code.code)
+
+    # On macOS, C++ + OpenMP with Clang_jll fails (clang 15 vs Xcode 16 libc++). Use system compiler if available.
+    cpp_openmp_system = Sys.isapple() && code isa CppCode && "-fopenmp" in cflags && !isempty(find_cpp_openmp_compiler_macos())
+
     args = String[]
-    if !use_system && code isa CppCode
-        # `clang++` is not part of `Clang_jll`
+    if !use_system && code isa CppCode && !cpp_openmp_system
+        # `clang++` is not part of `Clang_jll`; force C++ mode when using clang
         push!(args, "-x")
         push!(args, "c++")
     end
@@ -76,10 +98,13 @@ function compile(
         push!(args, "-S")
         push!(args, "-emit-llvm")
     end
-    include_dir = normpath(Clang_jll.artifact_dir, "include")
-    push!(args, "-I$include_dir")
+    if !cpp_openmp_system
+        include_dir = normpath(Clang_jll.artifact_dir, "include")
+        push!(args, "-I$include_dir")
+    end
     # Clang_jll's clang doesn't know the macOS SDK path; add -isysroot so system headers (e.g. stdio.h) are found.
-    if !use_system && Sys.isapple()
+    # Skip when using system C++ OpenMP compiler (it finds headers itself).
+    if !use_system && Sys.isapple() && !cpp_openmp_system
         sdk_path = try
             readchomp(pipeline(`xcrun --show-sdk-path`, stderr=devnull))
         catch
@@ -90,10 +115,14 @@ function compile(
             push!(args, sdk_path)
         end
     end
-    if "-fopenmp" in cflags && !use_system
+    if "-fopenmp" in cflags && (!use_system || cpp_openmp_system)
         dir = LLVMOpenMP_jll.artifact_dir
         push!(args, "-I$(dir)/include")
         push!(args, "-L$(dir)/lib")
+        if cpp_openmp_system && Sys.isapple()
+            # Embed rpath so the loaded library finds libomp at runtime
+            push!(args, "-Wl,-rpath,$(dir)/lib")
+        end
     end
     push!(args, main_file)
     push!(args, "-o")
@@ -101,6 +130,12 @@ function compile(
     try
         if use_system
             cmd = Cmd([compiler(code, mpi); args])
+            if verbose >= 1
+                @info("Compiling : $cmd")
+            end
+            run(cmd)
+        elseif cpp_openmp_system
+            cmd = Cmd([find_cpp_openmp_compiler_macos(); args])
             if verbose >= 1
                 @info("Compiling : $cmd")
             end
