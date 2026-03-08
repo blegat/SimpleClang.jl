@@ -153,7 +153,7 @@ float sum(float *vec, int length, int num_threads, int verbose) {
 }
 """, lib = true, cflags = ["-O3", "-march=native", "-fopenmp"])
 
-@testset "OpenMP multithread (C)" begin
+@testset "OpenMP multithread" begin
     c_sum(x::Vector{Cfloat}; num_threads = 1, verbose = 0) = ccall(("sum", SUM_LIB), Cfloat, (Ptr{Cfloat}, Cint, Cint, Cint), x, length(x), num_threads, verbose);
     vec = Cfloat[-1, 3, 4, 2, 5, -2, -9, 4]
     for num_threads in 1:4
@@ -162,7 +162,6 @@ float sum(float *vec, int length, int num_threads, int verbose) {
 end
 
 # Taken from https://blegat.github.io/LINMA2710/
-# On macOS this uses Homebrew LLVM's clang++ when available (Clang_jll's clang is too old for system libc++).
 const SUM_CPP_LIB = compile(cpp"""
 #include <vector>
 #include <stdint.h>
@@ -196,7 +195,7 @@ float sum(float *vec, int length, int num_threads, int verbose) {
 }
 }""", lib = true, cflags = ["-O3", "-mavx2", "-fopenmp"])
 
-@testset "OpenMP multithread (C++)" begin
+@testset "OpenMP multithread" begin
     c_sum(x::Vector{Cfloat}; num_threads = 1, verbose = 0) = ccall(("sum", SUM_CPP_LIB), Cfloat, (Ptr{Cfloat}, Cint, Cint, Cint), x, length(x), num_threads, verbose);
     vec = Cfloat[-1, 3, 4, 2, 5, -2, -9, 4]
     for num_threads in 1:4
