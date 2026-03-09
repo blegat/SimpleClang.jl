@@ -111,6 +111,6 @@ julia> code, lib = compile_lib(c"""
        """)
 (CCode("int increment(int i) {\n  return i + 1;\n}\n"), "/tmp/jl_cfdpYw/lib.so")
 
-julia> ccall((:increment, LIB), Int, (Int,), 1)
+julia> ccall((:increment, lib), Int, (Int,), 1)
 2
 ```
