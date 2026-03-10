@@ -114,3 +114,10 @@ julia> code, lib = compile_lib(c"""
 julia> ccall((:increment, LIB), Int, (Int,), 1)
 2
 ```
+
+## Examples
+
+Examples of courses using this packages
+
+* https://github.com/blegat/LEPL1503
+* https://github.com/blegat/LINMA2710
